@@ -25,11 +25,21 @@ jobs:
           pip install --upgrade pip
           pip install buildozer cython
 
-      - name: Generate Spec and Build APK
+      - name: Pre-accept Android Licenses & Build APK
         run: |
+          # قبول تراخيص الأندرويد تلقائياً عبر نسخ تراخيص النظام
+          mkdir -p ~/.android/licenses
+          cp -r $ANDROID_HOME/licenses/* ~/.android/licenses/ 2>/dev/null || true
+
+          # إنشاء وتعديل ملف الإعدادات
           buildozer init
-          sed -i 's/#android.accept_sdk_license = False/android.accept_sdk_license = True/' buildozer.spec
-          sed -i 's/android.accept_sdk_license = False/android.accept_sdk_license = True/' buildozer.spec
+          sed -i 's/.*android.accept_sdk_license.*/android.accept_sdk_license = True/' buildozer.spec
+
+          # نسخ التراخيص إلى مجلد buildozer الداخلي أيضاً
+          mkdir -p ~/.buildozer/android/platform/android-sdk/licenses
+          cp -r ~/.android/licenses/* ~/.buildozer/android/platform/android-sdk/licenses/ 2>/dev/null || true
+
+          # بدء التجميع
           buildozer -v android debug
 
       - name: Upload APK Artifact
